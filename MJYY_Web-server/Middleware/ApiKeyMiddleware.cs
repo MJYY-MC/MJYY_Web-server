@@ -14,7 +14,7 @@
 		}
 
 		public async Task InvokeAsync(HttpContext context) {
-			if (Convert.ToBoolean(_config["ENV:ApiKey:Enable"])) {
+			if (Convert.ToBoolean(_config["Config:ApiKey:Enable"])) {
 				string path = context.Request.Path.Value?.ToLower() ?? "";
 				if (path.StartsWith("/swagger")) {//跳过指定的路径检查
 					await _next(context);
@@ -22,7 +22,7 @@
 				}
 
 				//配置文件中预期的api key
-				string? expectedKey = _config["ENV:ApiKey:Key"];
+				string? expectedKey = _config["Config:ApiKey:Key"];
 				//读取api key，优先从header读取，其次是query
 				string? providedKey =
 					context.Request.Headers["X-API-Key"].FirstOrDefault() ??

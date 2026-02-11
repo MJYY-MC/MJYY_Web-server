@@ -1,4 +1,3 @@
-
 using Microsoft.OpenApi.Models;
 using MJYY_Web_server.Middleware;
 
@@ -12,7 +11,7 @@ namespace MJYY_Web_server
 			var env = builder.Environment;
             {
                 string[] allowedOrigins = ((Func<string[]>)(() => {
-                    string[]? origins = builder.Configuration.GetSection("ENV:Cors:Origins").Get<string[]>();
+                    string[]? origins = builder.Configuration.GetSection("Config:Cors:Origins").Get<string[]>();
                     //Console.WriteLine(origins?[0]);
 
                     if (origins != null) {
@@ -41,8 +40,6 @@ namespace MJYY_Web_server
                     });
                 });
             }
-			builder.Services.AddHttpForwarder();
-			builder.Services.AddHttpClient();
 			builder.Services.AddControllers();//¿ØÖÆÆ÷
             // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
             builder.Services.AddEndpointsApiExplorer();
