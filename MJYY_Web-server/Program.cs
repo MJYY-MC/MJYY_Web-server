@@ -1,4 +1,5 @@
 
+using Microsoft.OpenApi.Models;
 using MJYY_Web_server.Middleware;
 
 namespace MJYY_Web_server
@@ -40,10 +41,33 @@ namespace MJYY_Web_server
                     });
                 });
             }
+			builder.Services.AddHttpForwarder();
+			builder.Services.AddHttpClient();
 			builder.Services.AddControllers();//控制器
             // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
             builder.Services.AddEndpointsApiExplorer();
-            builder.Services.AddSwaggerGen();
+            if (env.IsDevelopment()) {
+                builder.Services.AddSwaggerGen(options => {
+                    options.AddSecurityDefinition("ApiKey", new OpenApiSecurityScheme(){
+                        Description = "API Key认证",
+                        Name = "X-API-Key",
+                        In = ParameterLocation.Header,
+                        Type = SecuritySchemeType.ApiKey,
+                    });
+
+                    options.AddSecurityRequirement(new OpenApiSecurityRequirement(){
+                        {
+                            new OpenApiSecurityScheme(){
+                                Reference = new OpenApiReference{
+                                    Type = ReferenceType.SecurityScheme,
+                                    Id = "ApiKey"
+                                }
+                            },
+                            Array.Empty<string>()
+                        }
+                    });
+                });
+			}
 
             var app = builder.Build();
             //使用CORS策略
