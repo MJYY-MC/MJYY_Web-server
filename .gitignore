@@ -6,3 +6,4 @@
 *.csproj.user
 
 MJYY_Web-server.http
+MJYY_Web-server/logs

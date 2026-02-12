@@ -5,9 +5,22 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <RootNamespace>MJYY_Web_server</RootNamespace>
+
+	  <Authors>Hgnim</Authors>
+	  <Company>$(Authors)</Company>
+	  <Owners>$(Authors)</Owners>
+	  <Copyright>Copyright (C) 2026 $(Authors), All rights reserved.</Copyright>
+	  <PackageLicenseExpression>AGPL-3.0</PackageLicenseExpression>
+	  <Product>MJYY_Web-server</Product>
+	  <Title>谧静幽原官网服务后端</Title>
+	  <AssemblyTitle>$(Title)</AssemblyTitle>
+	  <Description>谧静幽原官网服务后端</Description>
+	  <AssemblyName>谧静幽原官网服务后端</AssemblyName>
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Serilog.AspNetCore" Version="10.0.0" />
+    <PackageReference Include="Serilog.Sinks.File" Version="7.0.0" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="6.6.2" />
   </ItemGroup>
 

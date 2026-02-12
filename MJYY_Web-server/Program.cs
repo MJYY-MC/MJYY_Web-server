@@ -1,5 +1,6 @@
 using Microsoft.OpenApi.Models;
 using MJYY_Web_server.Middleware;
+using Serilog;
 
 namespace MJYY_Web_server
 {
@@ -8,6 +9,29 @@ namespace MJYY_Web_server
         public static void Main(string[] args)
         {
 			var builder = WebApplication.CreateBuilder(args);
+
+            {
+                /*if(builder.Environment.IsDevelopment())
+                    Serilog.Debugging.SelfLog.Enable(Console.Error);*/
+
+                var loggerConfig = new LoggerConfiguration()
+														.MinimumLevel.Information()
+														.Enrich.FromLogContext()
+                                                        .WriteTo.Console()//同时输出至控制台
+                                                        .WriteTo.File("logs/log-.txt", rollingInterval: RollingInterval.Day/*按天输出日志文件*/);
+                loggerConfig.ReadFrom.Configuration(builder.Configuration.GetSection("SerilogConfig"));//读取json中的配置
+
+                Log.Logger = loggerConfig.CreateLogger();
+
+                builder.Host.UseSerilog(Log.Logger);//将默认日志系统替换为serilog
+            }
+			Log.Information(
+@"----------
+谧静幽原官网服务后端
+版本：动态构建版
+----------"
+);
+            Log.Debug("服务端开始加载");
 			var env = builder.Environment;
             {
                 string[] allowedOrigins = ((Func<string[]>)(() => {
@@ -81,7 +105,9 @@ namespace MJYY_Web_server
             app.UseAuthorization();
             app.MapControllers();
 
+            Log.Debug("服务端加载完成，开始监听请求");
             app.Run();
+            Log.Information("服务端已停止");
         }
     }
 }
