@@ -13,29 +13,73 @@
 			_logger = logger;
 		}
 
+		const string configHead = "Config:ApiKey:";
+
+		public class ApikeyTarget {
+			/// <summary>
+			/// 是否启用api key验证
+			/// </summary>
+			public bool Enable { get; set; } = true;
+			/// <summary>
+			/// url前缀，用于匹配
+			/// </summary>
+			public required string UrlStart { get; set; }
+			/// <summary>
+			/// 使用的key名称，在配置文件中配置每个key的名称和对应值
+			/// </summary>
+			public string? KeyName { get; set; } = null;
+		}
+
 		public async Task InvokeAsync(HttpContext context) {
-			if (Convert.ToBoolean(_config["Config:ApiKey:Enable"])) {
-				string path = context.Request.Path.Value?.ToLower() ?? "";
-				if (path.StartsWith("/swagger")) {//跳过指定的路径检查
+			if (Convert.ToBoolean(_config[$"{configHead}Enable"])) {
+				async Task code500(string text) {
+					_logger.LogError(
+						"[IP: {ip}, Port: {port}, Path: {path}][500] {text}"
+						, context.Connection.RemoteIpAddress
+						, context.Connection.RemotePort
+						, context.Request.Path
+						, text
+						);
+					context.Response.StatusCode = 500;
+					await context.Response.WriteAsJsonAsync(new { code = 500 });
+				}
+
+				ApikeyTarget target=null!;
+				{//根据请求路径匹配目标配置
+					string path = context.Request.Path.Value?.ToLower() ?? "";
+					ApikeyTarget[]? akts = _config.GetSection($"{configHead}Targets").Get<ApikeyTarget[]>();
+					if (akts != null) {
+						bool pass = false;
+						foreach(ApikeyTarget akt in akts) {
+							if (path.StartsWith(akt.UrlStart.ToLower())) {
+								pass = true;
+								target = akt;
+								break;
+							}
+						}
+						if (!pass) {
+							await code500("未在ApiKey/Targets配置中匹配到目标");
+							return;
+						}
+					}
+					else {
+						await code500("ApiKey/Targets配置为空");
+						return;
+					}
+				}
+				if (!target.Enable) {//未启用验证则放行
 					goto defEnd;
 				}
 
 				//配置文件中预期的api key
-				string? expectedKey = _config["Config:ApiKey:Key"];
+				string? expectedKey = _config[$"{configHead}Keys:{target.KeyName}"];
 				//读取api key，优先从header读取，其次是query
 				string? providedKey =
 					context.Request.Headers["X-API-Key"].FirstOrDefault() ??
 					context.Request.Query["apiKey"].FirstOrDefault();
 
 				if (string.IsNullOrEmpty(expectedKey)) {//检测是否配置了api key
-					_logger.LogError(
-						"[IP: {ip}, Port: {port}, Path: {path}][500] ApiKey未在appsettings.json中配置"
-						, context.Connection.RemoteIpAddress
-						, context.Connection.RemotePort
-						, context.Request.Path
-						);
-					context.Response.StatusCode = 500;
-					await context.Response.WriteAsJsonAsync(new { code = 500 });
+					await code500("指定的ApiKey未在ApiKey/Keys中配置");
 					return;
 				}
 
