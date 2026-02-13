@@ -35,7 +35,7 @@
 				async Task code500(string text) {
 					_logger.LogError(
 						"[IP: {ip}, Port: {port}, Path: {path}][500] {text}"
-						, context.Connection.RemoteIpAddress
+						, GetRemoteIpAddress(context)
 						, context.Connection.RemotePort
 						, context.Request.Path
 						, text
@@ -86,7 +86,7 @@
 				if (providedKey != expectedKey) {//验证失败处理
 					_logger.LogWarning(
 						"[IP: {ip}, Port: {port}, Path: {path}][401] API Key 验证失败"
-						, context.Connection.RemoteIpAddress
+						, GetRemoteIpAddress(context)
 						, context.Connection.RemotePort
 						, context.Request.Path
 						);
@@ -103,7 +103,7 @@
 		defEnd:
 			_logger.LogInformation(
 				"[IP: {ip}, Port: {port}, Path: {path}][{sCode}] Protocol: {protocol}"
-				, context.Connection.RemoteIpAddress
+				, GetRemoteIpAddress(context)
 				, context.Connection.RemotePort
 				, context.Request.Path
 				, context.Response.StatusCode
@@ -111,5 +111,10 @@
 				);
 			await _next(context);//通过则继续处理
 		}
+
+		private string? GetRemoteIpAddress(HttpContext context) =>
+			(Convert.ToBoolean(_config["Config:Server:UseXFFRequestHeader"]) == true)
+				? context.Request.Headers["X-Forwarded-For"].ToString()
+				: context.Connection.RemoteIpAddress?.ToString();
 	}
 }

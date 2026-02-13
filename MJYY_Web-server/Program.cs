@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.OpenApi.Models;
 using MJYY_Web_server.Middleware;
 using Serilog;
@@ -89,9 +90,20 @@ namespace MJYY_Web_server
                     });
                 });
 			}
+            {
+                string? url = builder.Configuration.GetSection("Config:Server:Url").Get<string>();
+                if (url != null)
+                    builder.WebHost.UseUrls(url);
+            }
 
-            var app = builder.Build();
-            //使用CORS策略
+			var app = builder.Build();
+            {
+				//PathBase不能只包含单独的斜杠；开头必须是斜杠，结尾不能是斜杠；可以为空或为null
+				string? pathBase = builder.Configuration.GetSection("Config:Server:PathBase").Get<string>();
+				if (pathBase != null)
+					app.UsePathBase(pathBase);
+            }
+			//使用CORS策略
 			app.UseCors("AllowFrontend");
             //使用api key中间件
 			app.UseMiddleware<ApiKeyMiddleware>();
