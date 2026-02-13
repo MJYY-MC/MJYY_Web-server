@@ -4,6 +4,8 @@
 */obj
 */Properties/launchSettings.json
 *.csproj.user
+MJYY_Web-server/.config/dotnet-tools.json
+MJYY_Web-server/Properties/PublishProfiles
 
 MJYY_Web-server.http
 MJYY_Web-server/logs
