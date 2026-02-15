@@ -55,6 +55,10 @@ namespace MJYY_Web_server.Controllers {
 				/// 密码
 				/// </summary>
 				public required string Value { get; set; }
+				/// <summary>
+				/// 是否在Value中使用复用值。如果为true，则Value的值将被视为一个占位符
+				/// </summary>
+				public bool UseReuseValue { get; set; } = false;
 			}
 			/// <summary>
 			/// 密码验证配置
@@ -72,6 +76,10 @@ namespace MJYY_Web_server.Controllers {
 				/// 参数值
 				/// </summary>
 				public required object Value { get; set; }
+				/// <summary>
+				/// 是否在Value中使用复用值。如果为true，则Value的值将被视为一个占位符
+				/// </summary>
+				public bool UseReuseValue { get; set; } = false;
 			}
 			/// <summary>
 			/// 返回json时附加的参数，仅json模式时生效
@@ -90,10 +98,30 @@ namespace MJYY_Web_server.Controllers {
 		[Consumes("application/json")]
 		public IActionResult Gateway(string gatewayName, string? path, [FromBody] GatewayPostBody postBody) {
 			if (!Gateways.TryGetValue(gatewayName, out var gwInfo))
-				return NotFound();
+				return NotFound(new {
+					code = 404,
+				});
 
 			if (gwInfo.Password.Enable) {
-				if (!(postBody.Password != null && postBody.Password == gwInfo.Password.Value)) {
+				string passwd;
+				if (gwInfo.Password.UseReuseValue) {
+					string? read = _config.GetSection($"Config:Gateway:ReuseValue:{gwInfo.Password.Value}").Get<string>();
+					if (read != null) 
+						passwd = read!;
+					else {
+						_logger.LogError(
+							"[Gateway Name: {gtwName}] 未找到指定复用值。复用值占位符：{reuseValueName}；Password/Value"
+							, gwInfo.Name
+							, gwInfo.Password.Value
+							);
+						return StatusCode(500, new {
+							code = 500,
+						});
+					}
+				}
+				else
+					passwd = gwInfo.Password.Value;
+				if (!(postBody.Password != null && postBody.Password == passwd)) {
 					_logger.LogWarning(
 						"[Gateway Name: {gtwName}] 密码验证失败，输入：{inpPw}"
 						, gwInfo.Name
@@ -110,7 +138,26 @@ namespace MJYY_Web_server.Controllers {
 				case GatewayInfo.ResultTypeEnum.json: {
 						Dictionary<string, object> resParas = [];
 						foreach(var p in gwInfo.Parameters) {
-							resParas.Add(p.Name, p.Value);
+							object val;
+							if (p.UseReuseValue) {
+								object? read = _config.GetSection($"Config:Gateway:ReuseValue:{p.Value}").Get<object>();
+								if (read != null)
+									val = read!;
+								else {
+									_logger.LogError(
+										"[Gateway Name: {gtwName}] 未找到指定复用值。复用值占位符：{reuseValueName}；Parameters/Value；参数名：{paramName}"
+										, gwInfo.Name
+										, p.Value
+										, p.Name
+										);
+									return StatusCode(500, new {
+										code = 500,
+									});
+								}
+							}
+							else
+								val = p.Value;
+							resParas.Add(p.Name, val);
 						}
 
 						return Ok(new {
