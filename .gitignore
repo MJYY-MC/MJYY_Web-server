@@ -9,3 +9,5 @@ MJYY_Web-server/Properties/PublishProfiles
 
 MJYY_Web-server.http
 MJYY_Web-server/logs
+# 忽略开发配置文件。使用时将appsettings.Development.template.json复制为appsettings.Development.json并按需加以修改即可。
+MJYY_Web-server/appsettings.Development.json
