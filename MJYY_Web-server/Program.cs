@@ -95,6 +95,7 @@ namespace MJYY_Web_server
                 if (url != null)
                     builder.WebHost.UseUrls(url);
             }
+			builder.Services.AddMemoryCache();
 
 			var app = builder.Build();
             {
