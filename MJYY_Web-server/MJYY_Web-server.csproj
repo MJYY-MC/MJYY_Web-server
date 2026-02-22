@@ -15,7 +15,7 @@
 	  <Title>谧静幽原官网服务后端</Title>
 	  <AssemblyTitle>$(Title)</AssemblyTitle>
 	  <Description>谧静幽原官网服务后端</Description>
-	  <AssemblyName>谧静幽原官网服务后端</AssemblyName>
+	  <AssemblyName>MJYY_Web_server</AssemblyName>
   </PropertyGroup>
 
   <ItemGroup>

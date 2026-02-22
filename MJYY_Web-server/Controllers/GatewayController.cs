@@ -134,11 +134,8 @@ namespace MJYY_Web_server.Controllers {
 		private readonly Dictionary<string, GatewayInfo> gateways;
 		private readonly GatewayPassword? gatewayPasswd;
 
-		[Route("{gatewayName}/{**path}")]
-		[HttpGet]
-		[HttpPost]
-		[Consumes("application/json")]
-		public IActionResult Gateway(string gatewayName, string? path, [FromBody] GatewayPostBody postBody) {
+		
+		private IActionResult Gateway(string gatewayName, string? path, GatewayPostBody? postBody=null) {
 			if (!gateways.TryGetValue(gatewayName, out var gwInfo))
 				return NotFound(new {
 					code = 404,
@@ -191,12 +188,12 @@ namespace MJYY_Web_server.Controllers {
 				}
 				else
 					passwd = gwInfo.Password.Value;
-				if (!(postBody.Password != null && postBody.Password == passwd)) {
+				if (!(postBody!=null && postBody.Password != null && postBody.Password == passwd)) {
 					_logger.LogWarning(
 						"[Gateway Name: {gtwName}, IP: {ip}] 密码验证失败，输入：{inpPw}"
 						, gwInfo.Name
 						, GetRemoteIpAddress(HttpContext)
-						, postBody.Password
+						, postBody?.Password
 						);
 					
 					if (gatewayPasswd != null) {
@@ -324,6 +321,17 @@ namespace MJYY_Web_server.Controllers {
 			}
 			
 		}
+
+		[HttpPost]
+		[Route("post/{gatewayName}/{**path}")]
+		[Consumes("application/json")]
+		public IActionResult GatewayPost(string gatewayName, string? path, [FromBody] GatewayPostBody postBody) 
+			=> Gateway(gatewayName, path, postBody);
+		[HttpGet]
+		[Route("get/{gatewayName}/{**path}")]
+		[Consumes("application/json")]
+		public IActionResult GatewayGet(string gatewayName, string? path) 
+			=> Gateway(gatewayName, path, null);
 
 
 
